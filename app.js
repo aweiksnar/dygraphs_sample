@@ -11,9 +11,15 @@
       this.fill = fill != null ? fill : "rgba(255, 255, 0, .6)";
     }
 
-    Shape.prototype.draw = function(ctx) {
+    Shape.prototype.draw = function(ctx, g) {
+      var scale, width;
       ctx.fillStyle = this.fill;
-      return ctx.fillRect(this.x, this.y, this.w, this.h);
+      width = g.xAxisRange()[1];
+      scale = g.toDomXCoord(g.xAxisRange()[1]);
+      console.log("Drawing...");
+      console.log("width", width);
+      console.log("scale", scale);
+      return ctx.fillRect(this.x / width * 35, this.y, this.w / width * 35, this.h);
     };
 
     return Shape;
@@ -32,6 +38,17 @@
       return this.annotations.push(annotation);
     };
 
+    CanvasState.prototype.redrawMarks = function() {
+      var shape, _i, _len, _ref, _results;
+      _ref = this.annotations;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        shape = _ref[_i];
+        _results.push(shape.draw(this.ctx, this.graph));
+      }
+      return _results;
+    };
+
     return CanvasState;
 
   })();
@@ -47,28 +64,21 @@
     });
   };
 
-  onMouseMove = function(event, g, context) {
-    return console.log("event", event, "g", g, "context", context);
-  };
+  onMouseMove = function(event, g, context) {};
 
   onMouseUp = function(event, g, context) {
-    var a, annotation, coordinates, i, left, right, shape, _i, _len, _ref, _results;
-    left = g.toDomCoords(g.toDataXCoord(context.dragStartX), 0)[0];
-    right = g.toDomCoords(g.toDataXCoord(event.layerX), 1)[0];
+    var a, coordinates, i, left, right, shape, _i, _len, _ref, _results;
+    left = context.dragStartX;
+    right = event.layerX;
+    console.log("left", left, "right", right);
     shape = new Shape(left, g.layout_.area_.y, right - left, g.layout_.area_.h);
-    shape.draw(g.canvas_ctx_);
-    annotation = {
-      "x": left,
-      "y": g.layout_.area_.y,
-      "width": right - left,
-      "height": g.layout_.area_.h
-    };
-    canvasState.addAnnotation(annotation);
+    shape.draw(g.canvas_ctx_, g);
+    canvasState.addAnnotation(shape);
     _ref = canvasState.annotations;
     _results = [];
     for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
       a = _ref[i];
-      coordinates = "" + (g.toDataXCoord(a.x)) + ", " + (g.toDataXCoord(a.x + a.width)) + "</br>";
+      coordinates = "" + (g.toDataXCoord(a.x)) + ", " + (g.toDataXCoord(a.x + a.w)) + "</br>";
       if (i === canvasState.annotations.length - 1) {
         _results.push(document.getElementById('annotations').innerHTML += coordinates);
       } else {
@@ -97,7 +107,6 @@
     height: 400,
     isZoomedIgnoreProgrammaticZoom: true,
     showLabelsOnHighlight: false,
-    drawHighlightPointCallback: "false",
     interactionModel: {
       mousedown: onMouseDown,
       mousemove: onMouseMove,
@@ -108,6 +117,9 @@
     rangeSelectorHeight: 30,
     rangeSelectorPlotStrokeColor: 'grey',
     rangeSelectorPlotFillColor: 'lightgrey',
+    zoomCallback: function() {
+      return canvasState.redrawMarks();
+    },
     underlayCallback: function(canvas, area, g) {
       var bottom_left, left, right, top_right;
       console.log("canvas", canvas, "Area", area, "g", g);

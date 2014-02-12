@@ -11,9 +11,17 @@ class Shape
     @h = h ? 1
     @fill = fill ? "rgba(255, 255, 0, .6)"
 
-  draw: (ctx) ->
+  draw: (ctx, g) ->
+    # .fillRect(x,y,width,height)
+
     ctx.fillStyle = @fill
-    ctx.fillRect(@x, @y, @w, @h)
+    width = g.xAxisRange()[1]
+    scale = g.toDomXCoord(g.xAxisRange()[1])
+    console.log "Drawing..."
+    console.log "width", width
+    console.log "scale", scale
+
+    ctx.fillRect((@x/width * 35), @y, (@w/width * 35), @h) #this '35' needs to be the x-axis max to scale right...
 
 class CanvasState
   constructor: (@graph) ->
@@ -24,6 +32,7 @@ class CanvasState
   addAnnotation: (annotation) ->
     @annotations.push annotation
 
+  redrawMarks: -> shape.draw(@ctx, @graph) for shape in @annotations
 
 onMouseDown = (event, g, context) ->
   context.initializeMouseDown(event, g, context)
@@ -37,21 +46,23 @@ onDoubleClick = (event, g, context) ->
     valueRange: null
 
 onMouseMove = (event, g, context) ->
-  console.log "event", event, "g", g, "context", context 
+  # console.log "event", event, "g", g, "context", context 
 
 onMouseUp = (event, g, context) ->
-  left = g.toDomCoords(g.toDataXCoord(context.dragStartX), 0)[0]
-  right = g.toDomCoords(g.toDataXCoord(event.layerX), 1)[0]
+  left = context.dragStartX
+  right = event.layerX
+
+  console.log "left", left, "right", right
 
   shape = new Shape(left, g.layout_.area_.y, right - left, g.layout_.area_.h)
-  shape.draw(g.canvas_ctx_)
+  shape.draw(g.canvas_ctx_, g)
 
-  annotation = {"x": left, "y": g.layout_.area_.y, "width": right - left, "height": g.layout_.area_.h}
-  canvasState.addAnnotation(annotation)
+  # annotation = {"x": left, "y": g.layout_.area_.y, "width": right - left, "height": g.layout_.area_.h}
+  canvasState.addAnnotation(shape)
 
   #append to #annotations for viewing
   for a, i in canvasState.annotations
-    coordinates = "#{g.toDataXCoord a.x}, #{g.toDataXCoord(a.x + a.width)}</br>"
+    coordinates = "#{g.toDataXCoord a.x}, #{g.toDataXCoord(a.x + a.w)}</br>"
     document.getElementById('annotations').innerHTML += coordinates if i is canvasState.annotations.length-1
 
 graph = new Dygraph document.getElementById("graph"),
@@ -68,7 +79,7 @@ graph = new Dygraph document.getElementById("graph"),
   height: 400
   isZoomedIgnoreProgrammaticZoom: true
   showLabelsOnHighlight: false
-  drawHighlightPointCallback: "false"# remove hover dot
+  # drawHighlightPointCallback: "false"# remove hover dot
   interactionModel:
     mousedown: onMouseDown
     mousemove: onMouseMove
@@ -78,6 +89,8 @@ graph = new Dygraph document.getElementById("graph"),
   rangeSelectorHeight: 30
   rangeSelectorPlotStrokeColor: 'grey'
   rangeSelectorPlotFillColor: 'lightgrey'
+  zoomCallback: ->
+    canvasState.redrawMarks()
   underlayCallback: (canvas, area, g) ->
     console.log "canvas", canvas, "Area", area, "g", g
     bottom_left = g.toDomCoords(0, -20);
