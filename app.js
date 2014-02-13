@@ -18,11 +18,6 @@
       ctx.fillStyle = this.fill;
       width = g.xAxisRange()[1];
       scale = g.toDomXCoord(g.xAxisRange()[1]);
-      console.log("RECTANGLE:");
-      console.log("start", this.start);
-      console.log("bottomHeight", this.bottomHeight);
-      console.log("width", this.width);
-      console.log("topHeight", this.topHeight);
       return ctx.fillRect(g.toDomXCoord(Math.min(this.start, this.finish)), this.bottomHeight, Math.abs(g.toDomXCoord(this.start) - g.toDomXCoord(this.finish)), this.topHeight);
     };
 
@@ -33,7 +28,7 @@
   CanvasState = (function() {
     function CanvasState(graph) {
       this.graph = graph;
-      this.ctx = graph.canvas_ctx_;
+      this.ctx = graph.hidden_ctx_;
       this.canvas = graph.canvas;
       this.annotations = [];
     }
@@ -79,7 +74,6 @@
     }
     console.log("start", start, "finish", finish);
     shape = new Shape(start, g.layout_.area_.y, finish, g.layout_.area_.h);
-    console.log("Shape-from mouse up-", shape);
     shape.draw(g.hidden_ctx_, g);
     canvasState.addAnnotation(shape);
     _ref = canvasState.annotations;
@@ -110,7 +104,6 @@
     drawYGrid: false,
     drawAxesAtZero: true,
     strokeWidth: 0,
-    color: "orange",
     width: 1000,
     height: 400,
     isZoomedIgnoreProgrammaticZoom: true,

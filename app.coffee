@@ -14,17 +14,12 @@ class Shape
     width = g.xAxisRange()[1]
     scale = g.toDomXCoord(g.xAxisRange()[1])
 
-    console.log "RECTANGLE:"
-    console.log "start", @start
-    console.log "bottomHeight", @bottomHeight
-    console.log "width", @width
-    console.log "topHeight", @topHeight
-
     #fillRect(x,y,width,height)
     ctx.fillRect (g.toDomXCoord Math.min(@start, @finish)), @bottomHeight, Math.abs(g.toDomXCoord(@start) - g.toDomXCoord(@finish)), @topHeight
+
 class CanvasState
   constructor: (@graph) ->
-    @ctx = graph.canvas_ctx_
+    @ctx = graph.hidden_ctx_
     @canvas = graph.canvas
     @annotations = []
 
@@ -52,11 +47,8 @@ onMouseUp = (event, g, context) ->
   return if start <= 0 or finish <= 0 #prevent -neg values and drags from rangs slider to graph
 
   console.log "start", start, "finish", finish
-
   shape = new Shape(start, g.layout_.area_.y, finish, g.layout_.area_.h)
-  console.log "Shape-from mouse up-", shape
   shape.draw(g.hidden_ctx_, g)  # use g.hidden_ctx_ tx or g.canvas_ctx_ ?
-
   canvasState.addAnnotation(shape)
 
   #append to #annotations for viewing
@@ -73,7 +65,6 @@ graph = new Dygraph document.getElementById("graph"),
   drawYGrid: false
   drawAxesAtZero: true
   strokeWidth: 0 # change to something like .1 to add lines between points
-  color: "orange"
   width: 1000
   height: 400
   isZoomedIgnoreProgrammaticZoom: true
@@ -89,14 +80,15 @@ graph = new Dygraph document.getElementById("graph"),
   rangeSelectorPlotFillColor: 'lightgrey'
   hideOverlayOnMouseOut: false
   # rollPeriod: 2
+  # highlightCircleSize: 3
   highlightSeriesBackgroundAlpha: 1 #disable background fading on highlight changes
   highlightSeriesOpts: # remove highlight circle on hover
     highlightCircleSize: 0
     # pointSize: 0
   drawCallback: -> canvasState?.redrawMarks()
-  # zoomCallback: -> canvasState.redrawMarks()
-  # highlightCallback: -> canvasState.redrawMarks()
-  # unhighlightCallback: -> canvasState.redrawMarks()
+  # zoomCallback: -> canvasState?.redrawMarks()
+  # highlightCallback: -> canvasState?.redrawMarks()
+  # unhighlightCallback: -> canvasState?.redrawMarks()
   underlayCallback: (canvas, area, g) ->
     console.log "canvas", canvas, "Area", area, "g", g
     bottom_left = g.toDomCoords(0, -20)
