@@ -10,8 +10,6 @@ class Shape
     @width = Math.abs @start - @finish #length of mark
 
   draw: (ctx, g) ->
-    # .fillRect(x,y,width,height)
-
     ctx.fillStyle = @fill
     width = g.xAxisRange()[1]
     scale = g.toDomXCoord(g.xAxisRange()[1])
@@ -22,6 +20,7 @@ class Shape
     console.log "width", @width
     console.log "topHeight", @topHeight
 
+    #fillRect(x,y,width,height)
     ctx.fillRect (g.toDomXCoord Math.min(@start, @finish)), @bottomHeight, Math.abs(g.toDomXCoord(@start) - g.toDomXCoord(@finish)), @topHeight
 class CanvasState
   constructor: (@graph) ->
@@ -50,14 +49,14 @@ onMouseMove = (event, g, context) ->
 onMouseUp = (event, g, context) ->
   start = g.toDataXCoord context.dragStartX # actual x axis value of drag begin
   finish = g.toDataXCoord event.layerX #actual x axis value of drag end
+  return if start <= 0 or finish <= 0 #prevent -neg values and drags from rangs slider to graph
 
   console.log "start", start, "finish", finish
 
   shape = new Shape(start, g.layout_.area_.y, finish, g.layout_.area_.h)
   console.log "Shape-from mouse up-", shape
-  shape.draw(g.canvas_ctx_, g)
+  shape.draw(g.hidden_ctx_, g)  # use g.hidden_ctx_ tx or g.canvas_ctx_ ?
 
-  # annotation = {"x": left, "y": g.layout_.area_.y, "width": right - left, "height": g.layout_.area_.h}
   canvasState.addAnnotation(shape)
 
   #append to #annotations for viewing
@@ -79,7 +78,6 @@ graph = new Dygraph document.getElementById("graph"),
   height: 400
   isZoomedIgnoreProgrammaticZoom: true
   showLabelsOnHighlight: false
-  # drawHighlightPointCallback: -> #"false"# remove hover dot
   interactionModel:
     mousedown: onMouseDown
     mousemove: onMouseMove
@@ -90,9 +88,14 @@ graph = new Dygraph document.getElementById("graph"),
   rangeSelectorPlotStrokeColor: 'grey'
   rangeSelectorPlotFillColor: 'lightgrey'
   hideOverlayOnMouseOut: false
-  # rollPeriod: 2 
-  zoomCallback: ->
-    canvasState.redrawMarks()
+  # rollPeriod: 2
+  highlightSeriesBackgroundAlpha: 1 #disable background fading on highlight changes
+  highlightSeriesOpts: # remove highlight circle on hover
+    highlightCircleSize: 0
+    # pointSize: 0
+  zoomCallback: -> canvasState.redrawMarks()
+  # highlightCallback: -> canvasState.redrawMarks()
+  # unhighlightCallback: -> canvasState.redrawMarks()
   underlayCallback: (canvas, area, g) ->
     console.log "canvas", canvas, "Area", area, "g", g
     bottom_left = g.toDomCoords(0, -20)

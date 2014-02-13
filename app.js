@@ -74,10 +74,13 @@
     var a, coordinates, finish, i, shape, start, _i, _len, _ref, _results;
     start = g.toDataXCoord(context.dragStartX);
     finish = g.toDataXCoord(event.layerX);
+    if (start <= 0 || finish <= 0) {
+      return;
+    }
     console.log("start", start, "finish", finish);
     shape = new Shape(start, g.layout_.area_.y, finish, g.layout_.area_.h);
     console.log("Shape-from mouse up-", shape);
-    shape.draw(g.canvas_ctx_, g);
+    shape.draw(g.hidden_ctx_, g);
     canvasState.addAnnotation(shape);
     _ref = canvasState.annotations;
     _results = [];
@@ -123,6 +126,10 @@
     rangeSelectorPlotStrokeColor: 'grey',
     rangeSelectorPlotFillColor: 'lightgrey',
     hideOverlayOnMouseOut: false,
+    highlightSeriesBackgroundAlpha: 1,
+    highlightSeriesOpts: {
+      highlightCircleSize: 0
+    },
     zoomCallback: function() {
       return canvasState.redrawMarks();
     },
