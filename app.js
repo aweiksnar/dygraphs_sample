@@ -3,12 +3,14 @@
   var CanvasState, Shape, canvasState, graph, item, onDoubleClick, onMouseDown, onMouseMove, onMouseUp;
 
   Shape = (function() {
-    function Shape(x, y, w, h, fill) {
-      this.x = x != null ? x : 0;
-      this.y = y != null ? y : 0;
-      this.w = w != null ? w : 1;
-      this.h = h != null ? h : 1;
+    function Shape(start, bottomHeight, finish, topHeight, fill) {
+      var _ref, _ref1;
+      this.start = (_ref = Math.min(start, finish)) != null ? _ref : 0;
+      this.bottomHeight = bottomHeight != null ? bottomHeight : 0;
+      this.finish = (_ref1 = Math.max(start, finish)) != null ? _ref1 : 1;
+      this.topHeight = topHeight != null ? topHeight : 1;
       this.fill = fill != null ? fill : "rgba(255, 255, 0, .6)";
+      this.width = Math.abs(this.start - this.finish);
     }
 
     Shape.prototype.draw = function(ctx, g) {
@@ -16,10 +18,12 @@
       ctx.fillStyle = this.fill;
       width = g.xAxisRange()[1];
       scale = g.toDomXCoord(g.xAxisRange()[1]);
-      console.log("Drawing...");
-      console.log("width", width);
-      console.log("scale", scale);
-      return ctx.fillRect(this.x / width * 35, this.y, this.w / width * 35, this.h);
+      console.log("RECTANGLE:");
+      console.log("start", this.start);
+      console.log("bottomHeight", this.bottomHeight);
+      console.log("width", this.width);
+      console.log("topHeight", this.topHeight);
+      return ctx.fillRect(g.toDomXCoord(Math.min(this.start, this.finish)), this.bottomHeight, Math.abs(g.toDomXCoord(this.start) - g.toDomXCoord(this.finish)), this.topHeight);
     };
 
     return Shape;
@@ -67,18 +71,19 @@
   onMouseMove = function(event, g, context) {};
 
   onMouseUp = function(event, g, context) {
-    var a, coordinates, i, left, right, shape, _i, _len, _ref, _results;
-    left = context.dragStartX;
-    right = event.layerX;
-    console.log("left", left, "right", right);
-    shape = new Shape(left, g.layout_.area_.y, right - left, g.layout_.area_.h);
+    var a, coordinates, finish, i, shape, start, _i, _len, _ref, _results;
+    start = g.toDataXCoord(context.dragStartX);
+    finish = g.toDataXCoord(event.layerX);
+    console.log("start", start, "finish", finish);
+    shape = new Shape(start, g.layout_.area_.y, finish, g.layout_.area_.h);
+    console.log("Shape-from mouse up-", shape);
     shape.draw(g.canvas_ctx_, g);
     canvasState.addAnnotation(shape);
     _ref = canvasState.annotations;
     _results = [];
     for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
       a = _ref[i];
-      coordinates = "" + (g.toDataXCoord(a.x)) + ", " + (g.toDataXCoord(a.x + a.w)) + "</br>";
+      coordinates = "" + a.start + ", " + a.finish + "</br>";
       if (i === canvasState.annotations.length - 1) {
         _results.push(document.getElementById('annotations').innerHTML += coordinates);
       } else {
@@ -117,6 +122,7 @@
     rangeSelectorHeight: 30,
     rangeSelectorPlotStrokeColor: 'grey',
     rangeSelectorPlotFillColor: 'lightgrey',
+    hideOverlayOnMouseOut: false,
     zoomCallback: function() {
       return canvasState.redrawMarks();
     },
