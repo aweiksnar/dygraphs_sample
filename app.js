@@ -130,8 +130,8 @@
     highlightSeriesOpts: {
       highlightCircleSize: 0
     },
-    zoomCallback: function() {
-      return canvasState.redrawMarks();
+    drawCallback: function() {
+      return typeof canvasState !== "undefined" && canvasState !== null ? canvasState.redrawMarks() : void 0;
     },
     underlayCallback: function(canvas, area, g) {
       var bottom_left, left, right, top_right;

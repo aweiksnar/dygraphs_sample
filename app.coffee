@@ -93,7 +93,8 @@ graph = new Dygraph document.getElementById("graph"),
   highlightSeriesOpts: # remove highlight circle on hover
     highlightCircleSize: 0
     # pointSize: 0
-  zoomCallback: -> canvasState.redrawMarks()
+  drawCallback: -> canvasState?.redrawMarks()
+  # zoomCallback: -> canvasState.redrawMarks()
   # highlightCallback: -> canvasState.redrawMarks()
   # unhighlightCallback: -> canvasState.redrawMarks()
   underlayCallback: (canvas, area, g) ->
