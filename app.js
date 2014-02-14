@@ -14,11 +14,22 @@
     }
 
     Shape.prototype.draw = function(ctx, g) {
-      var scale, width;
+      var can, rect, scale, width;
       ctx.fillStyle = this.fill;
       width = g.xAxisRange()[1];
       scale = g.toDomXCoord(g.xAxisRange()[1]);
-      return ctx.fillRect(g.toDomXCoord(Math.min(this.start, this.finish)), this.bottomHeight, Math.abs(g.toDomXCoord(this.start) - g.toDomXCoord(this.finish)), this.topHeight);
+      can = new fabric.Canvas(g.canvas_);
+      rect = new fabric.Rect({
+        left: g.toDomXCoord(Math.min(this.start, this.finish)),
+        top: this.bottomHeight,
+        fill: this.fill,
+        width: Math.abs(g.toDomXCoord(this.start) - g.toDomXCoord(this.finish)),
+        height: this.topHeight
+      });
+      rect.lockScalingY = true;
+      rect.lockMovementY = true;
+      can.add(rect);
+      return console.log("RECT", rect);
     };
 
     return Shape;

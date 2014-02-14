@@ -15,7 +15,23 @@ class Shape
     scale = g.toDomXCoord(g.xAxisRange()[1])
 
     #fillRect(x,y,width,height)
-    ctx.fillRect (g.toDomXCoord Math.min(@start, @finish)), @bottomHeight, Math.abs(g.toDomXCoord(@start) - g.toDomXCoord(@finish)), @topHeight
+    # ctx.fillRect (g.toDomXCoord Math.min(@start, @finish)), @bottomHeight, Math.abs(g.toDomXCoord(@start) - g.toDomXCoord(@finish)), @topHeight
+
+    # g.canvas_.id = 'gg'
+    can = new fabric.Canvas(g.canvas_)
+    rect = new fabric.Rect
+      left: (g.toDomXCoord Math.min(@start, @finish))
+      top: @bottomHeight
+      fill: @fill
+      width: Math.abs(g.toDomXCoord(@start) - g.toDomXCoord(@finish))
+      height: @topHeight
+
+    rect.lockScalingY = true
+    rect.lockMovementY = true;
+
+    can.add rect
+
+    console.log "RECT", rect
 
 class CanvasState
   constructor: (@graph) ->
