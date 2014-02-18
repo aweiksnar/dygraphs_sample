@@ -27,38 +27,50 @@ class CanvasState
 
   redrawMarks: -> shape.draw(@ctx, @graph) for shape in @annotations
 
-onMouseDown = (event, g, context) ->
-  context.initializeMouseDown(event, g, context)
-  # console.log "event", event, "g", g, "context", context 
-  # console.log context.dragStartX, context.dragStartY
-  # console.log canvasState
+Events = 
+  constructor: -> @zoomed = false 
+  onMouseDown: (event, g, context) ->
+    context.initializeMouseDown(event, g, context)
 
-onDoubleClick = (event, g, context) ->
-  g.updateOptions
-    dateWindow: null
-    valueRange: null
+  onDoubleClick: (event, g, context) ->
+    @zoomed = !@zoomed
+    if @zoomed
+      [minX, maxX] = g.xAxisExtremes()
+    else
+      minX = g.toDataXCoord event.layerX
+      maxX = minX + g.xAxisExtremes()[1] / 5 #zoom scale
+    g.updateOptions
+      dateWindow: [minX, maxX]
+      valueRange: null
 
-onMouseMove = (event, g, context) ->
-  # console.log "event", event, "g", g, "context", context 
+  onMouseMove: (event, g, context) ->
+    # console.log "event", event, "g", g, "context", context 
 
-onMouseUp = (event, g, context) ->
-  start = g.toDataXCoord context.dragStartX # actual x axis value of drag begin
-  finish = g.toDataXCoord event.layerX #actual x axis value of drag end
-  return if start <= 0 or finish <= 0 #prevent -neg values and drags from rangs slider to graph
+  onMouseUp: (event, g, context) ->
+    start = g.toDataXCoord context.dragStartX # actual x axis value of drag begin
+    finish = g.toDataXCoord event.layerX #actual x axis value of drag end
+    return if start <= 0 or finish <= 0 or start is finish#prevent -neg values and drags from rangs slider to graph
 
-  console.log "start", start, "finish", finish
-  shape = new Shape(start, g.layout_.area_.y, finish, g.layout_.area_.h)
-  shape.draw(g.hidden_ctx_, g)  # use g.hidden_ctx_ tx or g.canvas_ctx_ ?
-  canvasState.addAnnotation(shape)
+    shape = new Shape(start, g.layout_.area_.y, finish, g.layout_.area_.h)
+    shape.draw(g.hidden_ctx_, g)  # use g.hidden_ctx_ tx or g.canvas_ctx_ ?
+    canvasState.addAnnotation(shape)
 
-  #append to #annotations for viewing
-  for a, i in canvasState.annotations
-    coordinates = "#{a.start}, #{a.finish}</br>"
-    document.getElementById('annotations').innerHTML += coordinates if i is canvasState.annotations.length-1
+    # append to #annotations for viewing
+    for a, i in canvasState.annotations
+      coordinates = "#{a.start}, #{a.finish}</br>"
+      document.getElementById('annotations').innerHTML += coordinates if i is canvasState.annotations.length-1
+
+normal_data = ([item['x'], item['y']] for item in light_curve_data)
+iterator = 0
+super_data = []
+for num in [1..10]
+  for item in light_curve_data
+    super_data.push [item['x'] + iterator, item['y']]
+  iterator += 35
 
 graph = new Dygraph document.getElementById("graph"),
-  for item in light_curve_data
-    [item['x'], item['y']]
+  # normal_data
+  super_data
 
   drawPoints: true
   drawXGrid: true
@@ -70,10 +82,10 @@ graph = new Dygraph document.getElementById("graph"),
   isZoomedIgnoreProgrammaticZoom: true
   showLabelsOnHighlight: false
   interactionModel:
-    mousedown: onMouseDown
-    mousemove: onMouseMove
-    mouseup: onMouseUp
-    dblclick: onDoubleClick
+    mousedown: Events.onMouseDown
+    mousemove: Events.onMouseMove
+    mouseup: Events.onMouseUp
+    dblclick: Events.onDoubleClick
   showRangeSelector: true
   rangeSelectorHeight: 30
   rangeSelectorPlotStrokeColor: 'grey'
@@ -86,18 +98,15 @@ graph = new Dygraph document.getElementById("graph"),
     highlightCircleSize: 0
     # pointSize: 0
   drawCallback: -> canvasState?.redrawMarks()
-  # zoomCallback: -> canvasState?.redrawMarks()
-  # highlightCallback: -> canvasState?.redrawMarks()
-  # unhighlightCallback: -> canvasState?.redrawMarks()
   underlayCallback: (canvas, area, g) ->
-    console.log "canvas", canvas, "Area", area, "g", g
+    # console.log "canvas", canvas, "Area", area, "g", g
     bottom_left = g.toDomCoords(0, -20)
     top_right = g.toDomCoords(area.w, +20)
     left = bottom_left[0]
     right = top_right[0]
 
     canvas.fillStyle = "#000";
-    canvas.fillRect(left, area.y, right - left, area.h);
+    canvas.fillRect(left, area.y, right - left, area.h)
 
 canvasState = new CanvasState(graph)
 window.canvasState = canvasState
