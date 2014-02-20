@@ -1,0 +1,10 @@
+{
+  "name": "dygraphs_sample",
+  "version": "0.0.0",
+  "scripts": {
+    "deploy": "publisssh . demo.zooniverse.org/planethunters/alex --ignore 'node_modules|.git'"
+  },
+  "dependencies": {
+    "publisssh": "~0.2.4"
+  }
+}
